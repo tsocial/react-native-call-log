@@ -7,7 +7,7 @@ import android.database.Cursor;
 import java.util.Date;
 import android.content.Context;
 import org.json.*;
-import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
@@ -31,13 +31,13 @@ public class CallLogModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-public void show( Callback callBack) {
+  public void show(Promise promise) {
     
     StringBuffer stringBuffer = new StringBuffer();
     Cursor cursor = this.context.getContentResolver().query(CallLog.Calls.CONTENT_URI,
             null, null, null, CallLog.Calls.DATE + " DESC");
     if (cursor == null) {
-        callBack.invoke("[]");
+        promise.resolve("[]");
         return;
     }
     int number = cursor.getColumnIndex(CallLog.Calls.NUMBER);
@@ -45,14 +45,16 @@ public void show( Callback callBack) {
     int date = cursor.getColumnIndex(CallLog.Calls.DATE);
     int duration = cursor.getColumnIndex(CallLog.Calls.DURATION);  
     int name = cursor.getColumnIndex(CallLog.Calls.CACHED_NAME);
+    int photo = cursor.getColumnIndex(CallLog.Calls.CACHED_PHOTO_URI);
     JSONArray callArray = new JSONArray();
     while (cursor.moveToNext()) {
+        String callName = cursor.getString(name);
+        String callPhotoURI = cursor.getString(photo);
         String phNumber = cursor.getString(number);
         String callType = cursor.getString(type);
         String callDate = cursor.getString(date);
         Date callDayTime = new Date(Long.valueOf(callDate));
         String callDuration = cursor.getString(duration);
-        String cachedName = cursor.getString(name);
         String dir = null;
         int dircode = Integer.parseInt(callType);
         switch (dircode) {
@@ -75,16 +77,17 @@ public void show( Callback callBack) {
             callObj.put("callDate", callDate);
             callObj.put("callDuration", callDuration);
             callObj.put("callDayTime", callDayTime);
-            callObj.put("cachedName", cachedName);
-            callArray.put(callObj);
+            callObj.put("name", callName);
+            callObj.put("photoURI", callPhotoURI);
+            callArray.put(callObj); 
         }
         catch(JSONException e){
-            e.printStackTrace();
+            promise.reject(e);
         }
              
         
     }
     cursor.close();
-    callBack.invoke(callArray.toString());
+    promise.resolve(callArray.toString());
 }
 }
