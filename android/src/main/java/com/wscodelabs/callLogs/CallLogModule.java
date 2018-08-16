@@ -1,8 +1,8 @@
 package com.wscodelabs.callLogs;
 
+import android.util.Log;
 import android.provider.CallLog;
 import android.provider.CallLog.Calls;
-import java.lang.StringBuffer;
 import android.database.Cursor;
 import java.util.Date;
 import android.content.Context;
@@ -36,6 +36,16 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         cursor = null;
     }
 
+    private String getValueAtColumn(int columnIndex, String columnName) {
+        try {
+            return cursor.getString(columnIndex);
+        } 
+        catch (Exception e) {
+            Log.d("CallLogModule", "could not fetch value at column" + columnName);
+            return "";
+        }
+    }
+
     @ReactMethod
     public void show(int size, Promise promise) {
         if (cursor == null) {
@@ -63,13 +73,13 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         int count = 0;
 
         while (count < size && cursor.moveToNext()) {
-            String callName = cursor.getString(name);
-            String callPhotoURI = cursor.getString(photo);
-            String phNumber = cursor.getString(number);
-            String callType = cursor.getString(type);
-            String callDate = cursor.getString(date);
+            String callName = getValueAtColumn(name, "name");
+            String callPhotoURI = getValueAtColumn(photo, "photo");
+            String phNumber = getValueAtColumn(number, "number");
+            String callType = getValueAtColumn(type, "type");
+            String callDate = getValueAtColumn(date, "date");
             Date callDayTime = new Date(Long.valueOf(callDate));
-            String callDuration = cursor.getString(duration);
+            String callDuration = getValueAtColumn(duration, "duration");
             String dir = null;
             int dircode = Integer.parseInt(callType);
             switch (dircode) {
