@@ -19,75 +19,93 @@ import java.util.Map;
 public class CallLogModule extends ReactContextBaseJavaModule {
 
     private Context context;
+    private Cursor cursor;
 
-  public CallLogModule(ReactApplicationContext reactContext) {
-    super(reactContext);
-    this.context= reactContext;
-  }
-
-  @Override
-  public String getName() {
-    return "CallLogs";
-  }
-
-  @ReactMethod
-  public void show(Promise promise) {
-    
-    StringBuffer stringBuffer = new StringBuffer();
-    Cursor cursor = this.context.getContentResolver().query(CallLog.Calls.CONTENT_URI,
-            null, null, null, CallLog.Calls.DATE + " DESC");
-    if (cursor == null) {
-        promise.resolve("[]");
-        return;
+    public CallLogModule(ReactApplicationContext reactContext) {
+        super(reactContext);
+        this.context= reactContext;
     }
-    int number = cursor.getColumnIndex(CallLog.Calls.NUMBER);
-    int type = cursor.getColumnIndex(CallLog.Calls.TYPE);
-    int date = cursor.getColumnIndex(CallLog.Calls.DATE);
-    int duration = cursor.getColumnIndex(CallLog.Calls.DURATION);  
-    int name = cursor.getColumnIndex(CallLog.Calls.CACHED_NAME);
-    int photo = cursor.getColumnIndex(CallLog.Calls.CACHED_PHOTO_URI);
-    JSONArray callArray = new JSONArray();
-    while (cursor.moveToNext()) {
-        String callName = cursor.getString(name);
-        String callPhotoURI = cursor.getString(photo);
-        String phNumber = cursor.getString(number);
-        String callType = cursor.getString(type);
-        String callDate = cursor.getString(date);
-        Date callDayTime = new Date(Long.valueOf(callDate));
-        String callDuration = cursor.getString(duration);
-        String dir = null;
-        int dircode = Integer.parseInt(callType);
-        switch (dircode) {
-        case CallLog.Calls.OUTGOING_TYPE:
-            dir = "OUTGOING";
-            break;
-        case CallLog.Calls.INCOMING_TYPE:
-            dir = "INCOMING";
-            break;
 
-        case CallLog.Calls.MISSED_TYPE:
-            dir = "MISSED";
-            break;
-        }
-
-        JSONObject callObj = new JSONObject();
-        try{
-            callObj.put("phoneNumber",phNumber);
-            callObj.put("callType", dir);
-            callObj.put("callDate", callDate);
-            callObj.put("callDuration", callDuration);
-            callObj.put("callDayTime", callDayTime);
-            callObj.put("name", callName);
-            callObj.put("photoURI", callPhotoURI);
-            callArray.put(callObj); 
-        }
-        catch(JSONException e){
-            promise.reject(e);
-        }
-             
-        
+    @Override
+    public String getName() {
+        return "CallLogs";
     }
-    cursor.close();
-    promise.resolve(callArray.toString());
-}
+
+    @ReactMethod
+    public void reset() {
+        cursor = null;
+    }
+
+    @ReactMethod
+    public void show(int size, Promise promise) {
+        if (cursor == null) {
+            cursor = this.context.getContentResolver().query(
+                CallLog.Calls.CONTENT_URI,
+                null,
+                null,
+                null,
+                CallLog.Calls.DATE + " DESC");
+        }
+
+        if (cursor.isClosed()) {
+            promise.resolve("[]");
+            return;
+        }
+
+        int number = cursor.getColumnIndex(CallLog.Calls.NUMBER);
+        int type = cursor.getColumnIndex(CallLog.Calls.TYPE);
+        int date = cursor.getColumnIndex(CallLog.Calls.DATE);
+        int duration = cursor.getColumnIndex(CallLog.Calls.DURATION);  
+        int name = cursor.getColumnIndex(CallLog.Calls.CACHED_NAME);
+        int photo = cursor.getColumnIndex(CallLog.Calls.CACHED_PHOTO_URI);
+
+        JSONArray callArray = new JSONArray();
+        int count = 0;
+
+        while (count < size && cursor.moveToNext()) {
+            String callName = cursor.getString(name);
+            String callPhotoURI = cursor.getString(photo);
+            String phNumber = cursor.getString(number);
+            String callType = cursor.getString(type);
+            String callDate = cursor.getString(date);
+            Date callDayTime = new Date(Long.valueOf(callDate));
+            String callDuration = cursor.getString(duration);
+            String dir = null;
+            int dircode = Integer.parseInt(callType);
+            switch (dircode) {
+            case CallLog.Calls.OUTGOING_TYPE:
+                dir = "OUTGOING";
+                break;
+            case CallLog.Calls.INCOMING_TYPE:
+                dir = "INCOMING";
+                break;
+
+            case CallLog.Calls.MISSED_TYPE:
+                dir = "MISSED";
+                break;
+            }
+
+            JSONObject callObj = new JSONObject();
+            try{
+                callObj.put("phoneNumber",phNumber);
+                callObj.put("callType", dir);
+                callObj.put("callDate", callDate);
+                callObj.put("callDuration", callDuration);
+                callObj.put("callDayTime", callDayTime);
+                callObj.put("name", callName);
+                callObj.put("photoURI", callPhotoURI);
+                callArray.put(callObj); 
+            }
+            catch(JSONException e){
+                promise.reject(e);
+            }
+
+            count++;
+        }
+
+        if (count < size) {
+            cursor.close();
+        }
+        promise.resolve(callArray.toString());
+    }
 }
