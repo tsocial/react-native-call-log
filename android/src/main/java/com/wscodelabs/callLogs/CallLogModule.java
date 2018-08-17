@@ -5,6 +5,7 @@ import android.provider.CallLog;
 import android.provider.CallLog.Calls;
 import android.database.Cursor;
 import java.util.Date;
+import java.lang.*;
 import android.content.Context;
 import org.json.*;
 import com.facebook.react.bridge.Promise;
@@ -19,7 +20,6 @@ import java.util.Map;
 public class CallLogModule extends ReactContextBaseJavaModule {
 
     private Context context;
-    private Cursor cursor;
 
     public CallLogModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -32,11 +32,36 @@ public class CallLogModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void reset() {
-        cursor = null;
+    public void fetchFrom(int size, Promise promise) {
+        long currentTime = System.currentTimeMillis();
+        String from = String.valueOf(currentTime);
+        fetch(from, size, null, null, promise);
     }
 
-    private String getValueAtColumn(int columnIndex, String columnName) {
+    @ReactMethod
+    public void fetchFrom(String from, int size, Promise promise) {
+        String selection = CallLog.Calls.DATE + " < ?";
+        String[] selectionArgs = { from };
+        fetch(from, size, selection, selectionArgs, promise);
+    }
+
+    @ReactMethod
+    public void fetchForNumberFrom(String number, int size, Promise promise) {
+        long currentTime = System.currentTimeMillis();
+        String from = String.valueOf(currentTime);
+        String selection = CallLog.Calls.NUMBER + " = ?";
+        String[] selectionArgs = { number };
+        fetch(from, size, selection, selectionArgs, promise);
+    }
+
+    @ReactMethod
+    public void fetchForNumberFrom(String number, String from, int size, Promise promise) {
+        String selection = CallLog.Calls.NUMBER + " = ? AND " + CallLog.Calls.DATE + " < ?";
+        String[] selectionArgs = { number, from };
+        fetch(from, size, selection, selectionArgs, promise);
+    }
+
+    private String getValueAtColumn(Cursor cursor, int columnIndex, String columnName) {
         try {
             return cursor.getString(columnIndex);
         } 
@@ -46,18 +71,15 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         }
     }
 
-    @ReactMethod
-    public void show(int size, Promise promise) {
-        if (cursor == null) {
-            cursor = this.context.getContentResolver().query(
-                CallLog.Calls.CONTENT_URI,
-                null,
-                null,
-                null,
-                CallLog.Calls.DATE + " DESC");
-        }
+    private void fetch(String from, int size, String selection, String[] selectionArgs, Promise promise) {
+        Cursor cursor = this.context.getContentResolver().query(
+            CallLog.Calls.CONTENT_URI,
+            null,
+            selection,
+            selectionArgs,
+            CallLog.Calls.DATE + " DESC");
 
-        if (cursor.isClosed()) {
+        if (cursor == null) {
             promise.resolve("[]");
             return;
         }
@@ -73,13 +95,13 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         int count = 0;
 
         while (count < size && cursor.moveToNext()) {
-            String callName = getValueAtColumn(name, "name");
-            String callPhotoURI = getValueAtColumn(photo, "photo");
-            String phNumber = getValueAtColumn(number, "number");
-            String callType = getValueAtColumn(type, "type");
-            String callDate = getValueAtColumn(date, "date");
+            String callName = getValueAtColumn(cursor, name, "name");
+            String callPhotoURI = getValueAtColumn(cursor, photo, "photo");
+            String phNumber = getValueAtColumn(cursor, number, "number");
+            String callType = getValueAtColumn(cursor, type, "type");
+            String callDate = getValueAtColumn(cursor, date, "date");
             Date callDayTime = new Date(Long.valueOf(callDate));
-            String callDuration = getValueAtColumn(duration, "duration");
+            String callDuration = getValueAtColumn(cursor, duration, "duration");
             String dir = null;
             int dircode = Integer.parseInt(callType);
             switch (dircode) {
@@ -113,9 +135,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
             count++;
         }
 
-        if (count < size) {
-            cursor.close();
-        }
+        cursor.close();
         promise.resolve(callArray.toString());
     }
 }
