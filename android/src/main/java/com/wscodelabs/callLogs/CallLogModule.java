@@ -32,6 +32,13 @@ public class CallLogModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void fetchFromDate(String from, int size, Promise promise) {
+        String selection = CallLog.Calls.DATE + " > ?";
+        String[] selectionArgs = { from };
+        fetch(from, size, selection, selectionArgs, promise);
+    }
+
+    @ReactMethod
     public void fetchFrom(int size, Promise promise) {
         long currentTime = System.currentTimeMillis();
         String from = String.valueOf(currentTime);
@@ -85,6 +92,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         }
 
         int number = cursor.getColumnIndex(CallLog.Calls.NUMBER);
+        // int viaNumber = cursor.getColumnIndex(CallLog.Calls.VIA_NUMBER);
         int type = cursor.getColumnIndex(CallLog.Calls.TYPE);
         int date = cursor.getColumnIndex(CallLog.Calls.DATE);
         int duration = cursor.getColumnIndex(CallLog.Calls.DURATION);  
@@ -98,6 +106,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
             String callName = getValueAtColumn(cursor, name, "name");
             String callPhotoURI = getValueAtColumn(cursor, photo, "photo");
             String phNumber = getValueAtColumn(cursor, number, "number");
+            // String viaPhNumber = getValueAtColumn(cursor, viaNumber, "viaNumber");
             String callType = getValueAtColumn(cursor, type, "type");
             String callDate = getValueAtColumn(cursor, date, "date");
             Date callDayTime = new Date(Long.valueOf(callDate));
@@ -120,6 +129,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
             JSONObject callObj = new JSONObject();
             try{
                 callObj.put("phoneNumber",phNumber);
+                // callObj.put("viaPhoneNumber",viaPhNumber);
                 callObj.put("callType", dir);
                 callObj.put("callDate", callDate);
                 callObj.put("callDuration", callDuration);
