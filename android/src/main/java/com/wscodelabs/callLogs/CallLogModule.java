@@ -92,7 +92,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         }
 
         int number = cursor.getColumnIndex(CallLog.Calls.NUMBER);
-        // int viaNumber = cursor.getColumnIndex(CallLog.Calls.VIA_NUMBER);
+        int viaNumber = cursor.getColumnIndex(Calls.VIA_NUMBER);
         int type = cursor.getColumnIndex(CallLog.Calls.TYPE);
         int date = cursor.getColumnIndex(CallLog.Calls.DATE);
         int duration = cursor.getColumnIndex(CallLog.Calls.DURATION);  
@@ -106,7 +106,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
             String callName = getValueAtColumn(cursor, name, "name");
             String callPhotoURI = getValueAtColumn(cursor, photo, "photo");
             String phNumber = getValueAtColumn(cursor, number, "number");
-            // String viaPhNumber = getValueAtColumn(cursor, viaNumber, "viaNumber");
+            String viaPhNumber = getValueAtColumn(cursor, viaNumber, "viaNumber");
             String callType = getValueAtColumn(cursor, type, "type");
             String callDate = getValueAtColumn(cursor, date, "date");
             Date callDayTime = new Date(Long.valueOf(callDate));
@@ -129,14 +129,14 @@ public class CallLogModule extends ReactContextBaseJavaModule {
             JSONObject callObj = new JSONObject();
             try{
                 callObj.put("phoneNumber",phNumber);
-                // callObj.put("viaPhoneNumber",viaPhNumber);
+                callObj.put("viaPhoneNumber",viaPhNumber);
                 callObj.put("callType", dir);
                 callObj.put("callDate", callDate);
                 callObj.put("callDuration", callDuration);
                 callObj.put("callDayTime", callDayTime);
                 callObj.put("name", callName);
                 callObj.put("photoURI", callPhotoURI);
-                callArray.put(callObj); 
+                callArray.put(callObj);
             }
             catch(JSONException e){
                 promise.reject(e);
