@@ -118,7 +118,11 @@ public class CallLogModule extends ReactContextBaseJavaModule {
                     if (subscriptionList != null) {
                         for (SubscriptionInfo subscriptionInfo : subscriptionList) {
                             int subscriptionId = subscriptionInfo.getSubscriptionId();
-                            simPhones.put(subscriptionId, subscriptionInfo.getNumber());
+                            String subscriptionNumber = subscriptionInfo.getNumber();
+                            if (!TextUtils.isEmpty(subscriptionNumber)) {
+                                simPhones.put(subscriptionId, subscriptionInfo.getNumber());
+                            }
+
                             Log.e("CallLogItem", subscriptionId + "");
                         }
                     }
@@ -126,6 +130,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
 
                 TelephonyManager telMgr = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
                 String number = telMgr.getLine1Number();
+                if (!TextUtils.isEmpty(number))
                 simPhones.put(LINE1_NUMBER_ID, number);
             }
         } catch (Exception ex) {
@@ -146,12 +151,6 @@ public class CallLogModule extends ReactContextBaseJavaModule {
     private void fetch(String from, int size, String selection, String[] selectionArgs, Promise promise) {
 
         Map<Integer, String> phoneNumbers = getSimNumbers();
-
-        if (phoneNumbers.size() == 0) {
-            promise.resolve("[]");
-            Log.e("CallLogModule", "Can't get sim numbers");
-            return;
-        }
 
         Cursor cursor = this.context.getContentResolver().query(
                 CallLog.Calls.CONTENT_URI,
@@ -234,6 +233,10 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         }
         if (TextUtils.isEmpty(myPhone)) {
             myPhone = phoneNumbers.get(LINE1_NUMBER_ID);
+        }
+
+        if (TextUtils.isEmpty(myPhone)) {
+            myPhone = "";
         }
         return myPhone;
     }
