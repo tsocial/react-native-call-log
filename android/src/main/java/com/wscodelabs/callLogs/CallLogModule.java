@@ -53,21 +53,21 @@ public class CallLogModule extends ReactContextBaseJavaModule {
     public void fetchFromDate(String from, int size, Promise promise) {
         String selection = CallLog.Calls.DATE + " > ?";
         String[] selectionArgs = {from};
-        fetch(from, size, selection, selectionArgs, promise);
+        fetch(from, size, selection, selectionArgs, true, promise);
     }
 
     @ReactMethod
     public void fetchFrom(int size, Promise promise) {
         long currentTime = System.currentTimeMillis();
         String from = String.valueOf(currentTime);
-        fetch(from, size, null, null, promise);
+        fetch(from, size, null, null, false, promise);
     }
 
     @ReactMethod
     public void fetchFrom(String from, int size, Promise promise) {
         String selection = CallLog.Calls.DATE + " < ?";
         String[] selectionArgs = {from};
-        fetch(from, size, selection, selectionArgs, promise);
+        fetch(from, size, selection, selectionArgs, false, promise);
     }
 
     @ReactMethod
@@ -76,14 +76,14 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         String from = String.valueOf(currentTime);
         String selection = CallLog.Calls.NUMBER + " = ?";
         String[] selectionArgs = {number};
-        fetch(from, size, selection, selectionArgs, promise);
+        fetch(from, size, selection, selectionArgs, false, promise);
     }
 
     @ReactMethod
     public void fetchForNumberFrom(String number, String from, int size, Promise promise) {
         String selection = CallLog.Calls.NUMBER + " = ? AND " + CallLog.Calls.DATE + " < ?";
         String[] selectionArgs = {number, from};
-        fetch(from, size, selection, selectionArgs, promise);
+        fetch(from, size, selection, selectionArgs, false, promise);
     }
 
     @ReactMethod
@@ -148,7 +148,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         }
     }
 
-    private void fetch(String from, int size, String selection, String[] selectionArgs, Promise promise) {
+    private void fetch(String from, int size, String selection, String[] selectionArgs, Boolean isAscending, Promise promise) {
 
         Map<Integer, String> phoneNumbers = getSimNumbers();
 
@@ -157,7 +157,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
                 null,
                 selection,
                 selectionArgs,
-                CallLog.Calls.DATE + " DESC");
+                CallLog.Calls.DATE + (isAscending ? " ASC" : " DESC"));
 
         if (cursor == null) {
             promise.resolve("[]");
