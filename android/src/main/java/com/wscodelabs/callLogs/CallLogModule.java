@@ -50,6 +50,13 @@ public class CallLogModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void fetchInRange(String from, String to, int size, Promise promise) {
+        String selection = CallLog.Calls.DATE + " > ? AND " + CallLog.Calls.DATE + " < ?";
+        String[] selectionArgs = {from, to};
+        fetch(from, size, selection, selectionArgs, true, promise);
+    }
+
+    @ReactMethod
     public void fetchFromDate(String from, int size, Promise promise) {
         String selection = CallLog.Calls.DATE + " > ?";
         String[] selectionArgs = {from};
