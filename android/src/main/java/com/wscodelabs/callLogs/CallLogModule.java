@@ -3,6 +3,7 @@ package com.wscodelabs.callLogs;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.provider.CallLog;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -111,7 +112,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         }
     }
 
-    public List<CallLog> fetchCallLogBatch(String fromDateTimestamp, int size) {
+    public List<AidoCallLog> fetchCallLogBatch(String fromDateTimestamp, int size) {
         String selection = CallLog.Calls.DATE + " > ?";
         String[] selectionArgs = {fromDateTimestamp};
         return fetch(size, selection, selectionArgs, true);
@@ -160,8 +161,8 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         }
     }
 
-    private List<CallLog> fetch(int size, String selection, String[] selectionArgs, Boolean isAscending) {
-        List<CallLog> callLogs = new ArrayList<>();
+    private List<AidoCallLog> fetch(int size, String selection, String[] selectionArgs, Boolean isAscending) {
+        List<AidoCallLog> callLogs = new ArrayList<>();
         Map<Integer, String> phoneNumbers = getSimNumbers();
 
         Cursor cursor = this.context.getContentResolver().query(
@@ -210,7 +211,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
                         break;
                 }
 
-                CallLog callLog = new CallLog();
+                AidoCallLog callLog = new AidoCallLog();
                 callLog.setPhoneNumber(phNumber);
                 String myPhone = getMyPhone(phoneNumbers, phoneAccount);
                 callLog.setPhoneAccount(myPhone);
@@ -326,7 +327,7 @@ public class CallLogModule extends ReactContextBaseJavaModule {
         return myPhone;
     }
 
-    public static class CallLog {
+    public static class AidoCallLog {
 
         private String phoneNumber;
         private String phoneAccount;
